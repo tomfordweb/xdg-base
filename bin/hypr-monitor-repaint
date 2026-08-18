@@ -31,21 +31,31 @@ fi
 [ -S "$sock" ] || { echo "hypr-monitor-repaint: no socket2 at $sock" >&2; exit 0; }
 
 # Single instance — exec-once already runs us once per launch, but guard against
-# a stray double-start.
-me="$(basename "$0")"
-for pid in $(pgrep -f "$me" 2>/dev/null); do
-    [ "$pid" = "$$" ] && continue
-    echo "hypr-monitor-repaint: already running (pid $pid), exiting" >&2
-    exit 0
-done
+# a stray double-start. This MUST NOT be a pgrep on our own name: the shell that
+# launched us (Hyprland's exec-once wrapper, or an interactive invocation) carries
+# the script path in its own cmdline, so `pgrep -f hypr-monitor-repaint` always
+# matched a "sibling" and the script exited immediately at every single launch.
+# flock keys on a real lock file instead, so only an actual second copy loses.
+lock="$runtime/hypr-monitor-repaint.lock"
+if command -v flock >/dev/null 2>&1; then
+    exec 9>"$lock" || exit 0
+    if ! flock -n 9; then
+        echo "hypr-monitor-repaint: already running, exiting" >&2
+        exit 0
+    fi
+fi
 
 gen_file="$runtime/hypr-monitor-repaint.gen"
 
 repaint() {
     # No monitor arg = all outputs. off, settle, on -> full re-scanout.
+    # The "on" half goes through hypr-dpms-wake, which asks each output
+    # individually and retries: a blanket dispatch can leave one monitor
+    # at dpmsStatus:false, which is the exact black-screen this script exists
+    # to clear.
     hyprctl dispatch dpms off
     sleep 1
-    hyprctl dispatch dpms on
+    "$(dirname "$0")/hypr-dpms-wake"
 }
 
 # Debounce: bump a generation counter per event and schedule a delayed repaint;

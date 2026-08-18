@@ -1,0 +1,44 @@
+#!/bin/sh
+# Force every Hyprland output back on, per monitor, with retries.
+#
+# WHY: `hyprctl dispatch dpms on` with no monitor argument is a single
+# request across all outputs, and on this NVIDIA host it can leave one
+# output behind — the observed failure is HDMI-A-3 sitting at
+# dpmsStatus:false while both DisplayPort monitors report true, with the
+# connector still `connected` in sysfs and the mode and workspace intact.
+# Nothing is wrong with the link; that one output simply never got turned
+# back on, and the only recovery was a KVM switch away and back (which
+# fires hotplug events and re-asserts DPMS as a side effect).
+#
+# So: ask each monitor individually, re-read the state, and ask again for
+# whatever is still off. Used by hypridle's on-resume/after_sleep_cmd and
+# by the SUPER+SHIFT+D keybind.
+
+set -u
+
+tries=3
+delay=1
+
+still_off() {
+    hyprctl monitors -j | jq -r '.[] | select(.dpmsStatus == false) | .name'
+}
+
+# A blanket dispatch first — it is one IPC call and usually enough.
+hyprctl dispatch dpms on >/dev/null
+
+n=0
+while [ "$n" -lt "$tries" ]; do
+    off="$(still_off)"
+    [ -n "$off" ] || exit 0
+    for mon in $off; do
+        hyprctl dispatch dpms on "$mon" >/dev/null
+    done
+    n=$(( n + 1 ))
+    sleep "$delay"
+done
+
+off="$(still_off)"
+if [ -n "$off" ]; then
+    echo "hypr-dpms-wake: still off after $tries tries: $off" >&2
+    exit 1
+fi
