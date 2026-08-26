@@ -60,7 +60,7 @@ apply_wallpaper() {
 # ── hyprland decoration ──────────────────────────────────────────────────
 # Set explicitly in both directions (rather than `hyprctl reload` back) so a
 # toggle never depends on config-file reload side effects. The rice values
-# below must stay in sync with decoration{} in config/hypr/hyprland.conf.
+# below must stay in sync with the decoration block in config/hypr/hyprland.lua.
 apply_hypr() {
   case "$1" in
     pro)

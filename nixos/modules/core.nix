@@ -196,15 +196,16 @@
   virtualisation.vmVariant.services.openssh.settings.PasswordAuthentication = lib.mkForce true;
 
   # QEMU: host WM swallows Super, so switch Hyprland's mod to Alt inside
-  # VMs only. hyprland.conf sources ~/.config/hypr-local/*.conf (outside
-  # the shared repo AND outside the ~/.config/hypr symlink into it);
-  # tmpfiles drops the override there each VM boot. Real installs never
-  # get this file, so Super stays the mod.
+  # VMs only. hyprland.lua dofiles ~/.config/hypr-local/hyprland.lua (outside
+  # the shared repo AND outside the ~/.config/hypr symlink into it) before it
+  # binds anything, and reads the mod back out of the global it sets; tmpfiles
+  # drops the override there each VM boot. Real installs never get this file,
+  # so Super stays the mod.
   virtualisation.vmVariant.systemd.tmpfiles.rules = [
     "d /home/tom/.config 0755 tom users -"
     "d /home/tom/.config/hypr-local 0755 tom users -"
-    "C+ /home/tom/.config/hypr-local/qemu-mainmod.conf 0644 tom users - ${pkgs.writeText "qemu-mainmod.conf" ''
-      $mainMod = ALT
+    "C+ /home/tom/.config/hypr-local/hyprland.lua 0644 tom users - ${pkgs.writeText "hypr-local.lua" ''
+      mainMod = "ALT"
     ''}"
   ];
 

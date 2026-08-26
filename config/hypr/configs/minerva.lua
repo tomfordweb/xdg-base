@@ -1,0 +1,73 @@
+-- minerva — multi-monitor desktop (NVIDIA). Ported from minerva.conf.
+--
+-- Monitors on this machine can disconnect/reconnect at runtime; explicit
+-- monitor rules make Hyprland restore the same layout on every replug
+-- instead of auto-placing.
+--
+-- Layout (origin top-left, pixels — all POSITIONS ARE LOGICAL, i.e. after
+-- transform AND scale):
+--   - HDMI-A-3: XEC ES-G34C8, a 34" 3440x1440 ULTRAWIDE, physically
+--     mounted PORTRAIT, so transform 1 (90° left). Unscaled: logical
+--     1440x3440.
+--   - DP-5 / DP-4: two Dell S2719DGF (2560x1440) stacked vertically to
+--     the right of it, DP-5 on top, DP-4 directly below.
+--
+-- CRITICAL — HDMI-A-3 IS 3440x1440, NOT 4K. It advertises a 3840x2160 mode
+-- and will happily accept it, then rescale the signal onto its real
+-- 3440x1440 grid. Nothing errors; the picture just comes out squashed,
+-- because 3840x2160 on an 800x330mm (21:9) panel gives pixels 36% taller
+-- than wide. The EDID physical size and its preferred mode both say
+-- ultrawide — believe them over the box the monitor came in.
+--
+-- CRITICAL — WRITE THE MODE LANDSCAPE-FIRST (3440x1440), NOT 1440x3440.
+-- Hyprland applies `transform` itself; the mode string must name a real EDID
+-- mode, and the panel never advertises a portrait one. Put the portrait
+-- numbers there and the lookup fails, Hyprland falls back silently, and you
+-- get 1920x1080 upscaled. Verified behaviour, not a guess — the two easiest
+-- ways to break this file are both above.
+--
+-- The Dells sit at x=1440 because that is HDMI-A-3's LOGICAL right edge:
+-- 1440 is the ROTATED width (the mode's 1440 becomes the horizontal axis),
+-- divided by scale 1. Their left edge must match exactly or the cursor (and
+-- new windows) can't cross the gap onto them — keyboard nav still works,
+-- which makes it look like the Dells are "dead". Change the HDMI scale and
+-- you must move the Dells: 1.25 -> x=1152, 1.5 -> x=960.
+--
+-- The portrait panel (3440 logical tall) is TALLER than the 2880-tall Dell
+-- stack, so the Dells are centered against IT, not the reverse:
+-- (3440 - 2880) / 2 = 280, hence DP-5 at y=280 and DP-4 at y=1720.
+--
+-- The Dells are 1440p, NOT 4K — do not put 3840x2160 back here (that was a
+-- stale mode that fell back to preferred and left a vertical gap). DP-5 runs
+-- 144Hz; DP-4 currently maxes at 60Hz (cable/port limited — a proper DP
+-- cable would unlock 144 there too).
+--
+-- When DP-4/DP-5 drop away, Hyprland automatically migrates every workspace
+-- to the remaining monitor (HDMI-A-3) — it becomes the de-facto primary with
+-- no extra config. On reconnect the rules below put everything back in this
+-- exact orientation.
+--
+-- NVIDIA driver/connector changes may renumber outputs — if the layout comes
+-- up scrambled, run `hyprctl monitors` and fix the names.
+--
+-- transform 1 = 90° (portrait, rotated left)
+
+-- 165Hz caused intermittent signal loss over this HDMI connection.
+-- Keep 60Hz for stable operation.
+hl.monitor({ output = "HDMI-A-3", mode = "3440x1440@60", position = "0x0",       scale = 1, transform = 1 })
+hl.monitor({ output = "DP-5",     mode = "2560x1440@144", position = "1440x280",  scale = 1 })
+hl.monitor({ output = "DP-4",     mode = "2560x1440@60",  position = "1440x1720", scale = 1 })
+
+-- Anything unmatched: auto-place at preferred res.
+hl.monitor({ output = "", mode = "preferred", position = "auto", scale = 1 })
+
+-- DISABLED 2026-08-07 with the steam_app window rule (see hyprland.lua) after
+-- the dwindle fullscreen segfault — re-enable together, tracked in dotfiles-3d4.
+-- hl.workspace_rule({ workspace = 10, monitor = "DP-5" })
+
+-- On a KVM switch-back the re-enabled DP monitors inherit workspaces but keep
+-- a stale buffer and never repaint (windows exist, screen stays blank). This
+-- listener cycles dpms on monitoradded to force a re-scanout. Needs socat.
+hl.on("hyprland.start", function()
+    hl.exec_cmd(os.getenv("HOME") .. "/code/tomfordweb/dotfiles/bin/hypr-monitor-repaint")
+end)
