@@ -36,12 +36,14 @@
 
 let
   pname = "bambu-studio-appimage";
-  version = "02.07.01.62";
+  version = "02.08.02.61";
+  # Upstream tacks a build timestamp onto the asset name; bump it with version.
+  build = "20260820225108";
   gst = gst_all_1;
 
   src = fetchurl {
-    url = "https://github.com/bambulab/BambuStudio/releases/download/v${version}/BambuStudio_ubuntu24.04-v${version}-20260616195227.AppImage";
-    hash = "sha256-+pi2CFMt+7uysJMUg6rEHlf7GcF1osx719Uo1eD7soc=";
+    url = "https://github.com/bambulab/BambuStudio/releases/download/v${version}/BambuStudio_ubuntu24.04-v${version}-${build}.AppImage";
+    hash = "sha256-1QGxA/rFQkUT7A6Na8FF+zBxneLH2U1zINcjdAyBp/0=";
   };
 
   contents = appimageTools.extract { inherit pname version src; };
