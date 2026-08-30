@@ -18,7 +18,7 @@ set -g window-status-activity-style "fg=#{{accent-secondary}}"
 set -g window-status-bell-style "fg=#{{danger}}"
 
 # right: sysinfo chip (glass, colored icons) + date/time chip (mauve) + host chip (surface)
-set -g status-right "#[fg=#{{surface0}},bg=default]#[fg=#{{subtext0}},bg=#{{surface0}}]#(tmux-sysinfo {{green}} {{sky}} {{neon-pink}} {{peach}} {{yellow}} {{subtext0}})#[fg=#{{surface0}},bg=default] #[fg=#{{surface0}},bg=default]#[fg=#{{subtext0}},bg=#{{surface0}}]%a %d %b#[fg=#{{surface0}},bg=default] #[fg=#{{accent-primary}},bg=default]#[fg=#{{base}},bg=#{{accent-primary}},bold]%H:%M#[fg=#{{accent-primary}},bg=default] #[fg=#{{surface0}},bg=default]#[fg=#{{subtext0}},bg=#{{surface0}}]#h#[fg=#{{surface0}},bg=default]"
+set -g status-right "#[fg=#{{surface0}},bg=default]#[fg=#{{subtext0}},bg=#{{surface0}}]#(tmux-sysinfo {{green}} {{sky}} {{neon-pink}} {{peach}} {{yellow}} {{subtext0}})#[fg=#{{surface0}},bg=default] #[fg=#{{surface0}},bg=default]#[fg=#{{subtext0}},bg=#{{surface0}}]%a %d %b#[fg=#{{surface0}},bg=default] #[fg=#{{accent-primary}},bg=default]#[fg=#{{base}},bg=#{{accent-primary}},bold]%I:%M %p#[fg=#{{accent-primary}},bg=default] #[fg=#{{surface0}},bg=default]#[fg=#{{subtext0}},bg=#{{surface0}}]#h#[fg=#{{surface0}},bg=default]"
 
 # panes
 set -g pane-border-style "fg=#{{surface0}}"
