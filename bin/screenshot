@@ -15,8 +15,32 @@ dir="${SCREENSHOT_DIR:-$HOME/Pictures/Screenshots}"
 mkdir -p "$dir"
 file="$dir/$(date +%Y-%m-%d_%H-%M-%S).png"
 
+focus_address=""
+
+remember_focus() {
+  local label address remainder
+
+  if read -r label address remainder < <(hyprctl activewindow 2>/dev/null); then
+    if [[ "$label" == "Window" && "$address" =~ ^[[:xdigit:]]+$ ]]; then
+      focus_address="0x$address"
+    fi
+  fi
+}
+
+restore_focus() {
+  [[ -n "$focus_address" ]] || return 0
+
+  # slurp's exclusive layer can leave Hyprland's input focus stale after it
+  # closes, especially when the selected region crosses monitors.
+  hyprctl dispatch \
+    "hl.dsp.focus({ window = 'address:$focus_address' })" \
+    >/dev/null 2>&1 || true
+}
+
 case "$mode" in
   region)
+    remember_focus
+    trap restore_focus EXIT
     geom="$(slurp)" || exit 1     # empty/cancelled selection -> abort quietly
     grim -g "$geom" "$file"
     ;;
