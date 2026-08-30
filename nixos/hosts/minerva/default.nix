@@ -146,10 +146,33 @@ in
       "gid=1000"
       "nofail"
       "noauto"
+      # soft is the kernel default, but declare it: a hard CIFS mount on a
+      # flaky router hangs processes uninterruptibly instead of erroring.
+      "soft"
       "x-systemd.automount"
-      "x-systemd.idle-timeout=300"
+      # The automount trigger fires on any stat of /mnt/* (ls -l, tab
+      # completion, a file manager). If the router is asleep or off, the
+      # default 90s mount timeout is what freezes /mnt. This host's mount
+      # currently costs ~25s in SessSetup, so the cap has to clear that.
+      "x-systemd.mount-timeout=45s"
+      # No idle-timeout on purpose. Every unmount makes the next stat of /mnt
+      # pay a fresh mount, so a short idle window turns one slow mount into a
+      # slow mount per command. Mount once, keep it.
     ];
   };
+
+  # The kernel registers the cifs.spnego and dns_resolver key types, then
+  # upcalls to request-key when CIFS needs them. nixpkgs' cifs-utils ships no
+  # request-key config and NixOS creates no /etc/request-key.conf, so those
+  # upcalls land nowhere. Wire the handlers, and negate everything else so an
+  # unrelated key type fails fast instead of waiting out its timeout.
+  # Note: this is correctness, not the fix for the slow mount on this host.
+  # Adding it did not move the ~25s SessSetup stall at all.
+  environment.etc."request-key.conf".text = ''
+    create cifs.spnego  * * ${pkgs.cifs-utils}/bin/cifs.upcall %k
+    create dns_resolver * * ${pkgs.keyutils}/bin/key.dns_resolver %k
+    create *            * * ${pkgs.keyutils}/bin/keyctl negate %k 30 %S
+  '';
   environment.systemPackages = [
     pkgs.cifs-utils
     pkgs.socat            # bin/hypr-monitor-repaint taps Hyprland's socket2
