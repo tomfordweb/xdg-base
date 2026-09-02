@@ -17,8 +17,10 @@
 # 2. Outputs can drift ANTI-PHASE — some on, some off. A toggle then just
 #    swaps which ones are dark, forever. That is the flip-flopping this script
 #    used to cause by retrying "on" per monitor in a loop. So a mixed state is
-#    a hard stop, not something to retry: it needs connector hotplug (flip the
-#    KVM away and back), which is the only thing observed to resync it.
+#    a hard stop, not something to retry. What resyncs it is input:
+#    misc:mouse_move_enables_dpms and misc:key_press_enables_dpms (both set in
+#    hyprland.lua) assert on for every output, which no dispatcher can do.
+#    Connector hotplug — flipping the KVM away and back — also works.
 #
 # Deliberately NOT here: `hl.monitor({ disabled = true })` as a recovery step.
 # It releases the CRTC, and neither a reload, a re-declare, nor any dpms call
@@ -74,7 +76,10 @@ while [ "$n" -le "$tries" ]; do
         die "outputs are anti-phase, toggling would only swap which ones are dark.
   on:  $(oneline "$on")
   off: $(oneline "$off")
-  Fix: flip the KVM away and back (connector hotplug resyncs them)."
+  Fix: move the mouse or press a key. misc:mouse_move_enables_dpms and
+  misc:key_press_enables_dpms (set in hyprland.lua) assert DPMS on for every
+  output, which is the one path that resyncs this. Failing that, flip the KVM
+  away and back for a connector hotplug."
     fi
 
     # Everything is off: one toggle lights the lot.

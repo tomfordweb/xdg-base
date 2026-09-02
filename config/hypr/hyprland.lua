@@ -169,6 +169,18 @@ hl.config({
         disable_hyprland_logo    = true,
         disable_splash_rendering = true,
         background_color         = c.base,
+
+        -- Wake every output on input. These are the ONLY way to assert
+        -- "DPMS on" in 0.56: `hl.dsp.dpms()` ignores both its state and its
+        -- monitor argument and merely toggles every output, so outputs that
+        -- drift out of phase (one on, the rest dark) can never be brought
+        -- back into line by a script — every toggle just swaps which ones are
+        -- lit. With these on, a keypress or mouse move asserts on for all of
+        -- them. Left at their default false, the observed failure was both
+        -- Dells sitting at DRM enabled=disabled after an idle blank, with a
+        -- KVM flip the only cure. See bin/hypr-dpms-wake.
+        mouse_move_enables_dpms  = true,
+        key_press_enables_dpms   = true,
     },
 
     -- XWayland (X11) apps — e.g. Bambu Studio — render blurry on fractionally
