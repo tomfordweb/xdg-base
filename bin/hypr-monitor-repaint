@@ -48,12 +48,15 @@ fi
 gen_file="$runtime/hypr-monitor-repaint.gen"
 
 repaint() {
-    # No monitor arg = all outputs. off, settle, on -> full re-scanout.
-    # The "on" half goes through hypr-dpms-wake, which asks each output
-    # individually and retries: a blanket dispatch can leave one monitor
-    # at dpmsStatus:false, which is the exact black-screen this script exists
-    # to clear.
-    hyprctl dispatch dpms off
+    # off, settle, on -> full re-scanout. Every dpms call hits all outputs:
+    # Hyprland 0.56's Lua dispatcher ignores the monitor argument, so there is
+    # no per-output form to reach for here.
+    #
+    # The "on" half goes through hypr-dpms-wake, which escalates to a modeset
+    # when an output comes back with its CRTC released — dpms alone leaves that
+    # one at dpmsStatus:false, which is the exact black screen this script
+    # exists to clear.
+    hyprctl dispatch 'hl.dsp.dpms("off")'
     sleep 1
     "$(dirname "$0")/hypr-dpms-wake"
 }
