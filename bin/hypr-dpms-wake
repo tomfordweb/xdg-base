@@ -24,14 +24,14 @@ still_off() {
 }
 
 # A blanket dispatch first — it is one IPC call and usually enough.
-hyprctl dispatch dpms on >/dev/null
+hyprctl dispatch 'hl.dsp.dpms("on")' >/dev/null
 
 n=0
 while [ "$n" -lt "$tries" ]; do
     off="$(still_off)"
     [ -n "$off" ] || exit 0
     for mon in $off; do
-        hyprctl dispatch dpms on "$mon" >/dev/null
+        hyprctl dispatch "hl.dsp.dpms(\"on\", \"$mon\")" >/dev/null
     done
     n=$(( n + 1 ))
     sleep "$delay"

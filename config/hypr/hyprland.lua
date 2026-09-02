@@ -70,7 +70,6 @@ hl.on("hyprland.start", function()
     -- waybar via rice-mode so it starts with the stylesheet matching the
     -- stored mode (style.css vs style-pro.css). See bin/rice-mode.
     hl.exec_cmd("rice-mode waybar-start")
-    hl.exec_cmd("hypridle")
     -- awww-daemon-start, not bare awww-daemon: at login the wayland socket
     -- often isn't accepting clients yet, and awww 0.12.1 panics+coredumps
     -- instead of waiting. The wrapper retries until the daemon connects.
