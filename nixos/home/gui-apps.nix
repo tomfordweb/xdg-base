@@ -59,6 +59,9 @@
     # Dev GUIs
     dbeaver-bin
 
+    # Creative
+    gimp       # 3.x; `gimp` and `gimp3` are the same attr in this nixpkgs
+
     # Desktop utils
     pavucontrol
     networkmanagerapplet
